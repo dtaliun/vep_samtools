@@ -83,11 +83,11 @@ RUN make install
 WORKDIR $SAMTOOLS_DIR
 RUN make install && rm -f Makefile *.c
 
-WORKDIR $HTSLIB_DIR
-RUN rm -f Makefile *.c
-
 WORKDIR $BCFTOOLS_DIR
 RUN make install && rm -f Makefile *.c
+
+WORKDIR $HTSLIB_DIR
+RUN rm -f Makefile *.c
 
 # Compile Variation LD C scripts
 WORKDIR $OPT_SRC/var_c_code
