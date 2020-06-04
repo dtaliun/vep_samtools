@@ -113,6 +113,7 @@ RUN apt-get update && apt-get -y install \
     libbz2-dev \
     liblzma-dev \
     libncurses5-dev \
+    libdbd-sqlite3-perl \
     locales \
     openssl \
     perl \
