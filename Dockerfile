@@ -24,6 +24,7 @@ ENV OPT /opt/vep
 ENV OPT_SRC $OPT/src
 ENV HTSLIB_DIR $OPT_SRC/htslib
 ENV SAMTOOLS_DIR $OPT_SRC/samtools
+ENV BCFTOOLS_DIR $OPT_SRC/bcftools
 ENV BRANCH release/100
 
 # Working directory
@@ -51,8 +52,9 @@ RUN if [ "$BRANCH" = "master" ]; \
     unzip -q ensembl-xs.zip && mv ensembl-xs-2.3.2 ensembl-xs && rm -rf ensembl-xs.zip && \
     # Clone/Download other repositories: bioperl-live is needed so the cpanm dependencies installation from the ensembl-vep/cpanfile file takes less disk space
     ensembl-vep/travisci/get_dependencies.sh && \
-    # Clone samtools
+    # Clone samtools and bcftools
     git clone --branch 1.9 --depth 1 https://github.com/samtools/samtools.git && \
+    git clone --branch 1.9 --depth 1 https://github.com/samtools/bcftools.git && \
     # Only keep the bioperl-live "Bio" library
     mv bioperl-live bioperl-live_bak && mkdir bioperl-live && mv bioperl-live_bak/Bio bioperl-live/ && rm -rf bioperl-live_bak && \
     ## A lot of cleanup on the imported libraries, in order to reduce the docker image ##
@@ -79,7 +81,13 @@ RUN make install
 # Install samtools
 # samtools requires 'libncurses5-dev'
 WORKDIR $SAMTOOLS_DIR
-RUN make install
+RUN make install && rm -f Makefile *.c
+
+WORKDIR $HTSLIB_DIR
+RUN rm -f Makefile *.c
+
+WORKDIR $BCFTOOLS_DIR
+RUN make install && rm -f Makefile *.c
 
 # Compile Variation LD C scripts
 WORKDIR $OPT_SRC/var_c_code
@@ -94,6 +102,7 @@ FROM ubuntu:18.04
 # Update aptitude and install some required packages
 # a lot of them are required for Bio::DB::BigFile
 RUN apt-get update && apt-get -y install \
+    ca-certificates \
     build-essential \
     cpanminus \
     curl \
@@ -121,6 +130,8 @@ ENV PERL5LIB_TMP $PERL5LIB:$OPT_SRC/ensembl-vep:$OPT_SRC/ensembl-vep/modules
 ENV PERL5LIB $PERL5LIB_TMP:$OPT_SRC/bioperl-live
 ENV KENT_SRC $OPT/src/kent-335_base/src
 ENV HTSLIB_DIR $OPT_SRC/htslib
+ENV SAMTOOLS_DIR $OPT_SRC/samtools
+ENV BCFTOOLS_DIR $OPT_SRC/bcftools
 ENV MACHTYPE x86_64
 ENV DEPS $OPT_SRC
 ENV PATH $OPT_SRC/ensembl-vep:$OPT_SRC/var_c_code:$PATH
@@ -159,7 +170,9 @@ RUN ensembl-vep/travisci/build_c.sh && \
     echo "$LANG_VAR UTF-8" >> /etc/locale.gen && locale-gen en_US.utf8 && \
     /usr/sbin/update-locale LANG=$LANG_VAR && \
     # Copy htslib executables. It also requires the packages 'zlib1g-dev', 'libbz2-dev' and 'liblzma-dev'
-    cp $HTSLIB_DIR/bgzip $HTSLIB_DIR/tabix $HTSLIB_DIR/htsfile /usr/local/bin/
+    cp $HTSLIB_DIR/bgzip $HTSLIB_DIR/tabix $HTSLIB_DIR/htsfile /usr/local/bin/ && \
+    cp $SAMTOOLS_DIR/samtools /usr/local/bin/ && \
+    cp $BCFTOOLS_DIR/bcftools /usr/local/bin/
 
 ENV LC_ALL $LANG_VAR
 ENV LANG $LANG_VAR
