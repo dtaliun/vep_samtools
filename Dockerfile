@@ -12,6 +12,7 @@ RUN apt-get update && apt-get -y install \
     zlib1g-dev \
     libbz2-dev \
     liblzma-dev \
+    libncurses5-dev \
     perl \
     perl-base \
     unzip \
@@ -76,6 +77,7 @@ WORKDIR $HTSLIB_DIR
 RUN make install
 
 # Install samtools
+# samtools requires 'libncurses5-dev'
 WORKDIR $SAMTOOLS_DIR
 RUN make install
 
@@ -101,6 +103,7 @@ RUN apt-get update && apt-get -y install \
     zlib1g-dev \
     libbz2-dev \
     liblzma-dev \
+    libncurses5-dev \
     locales \
     openssl \
     perl \
