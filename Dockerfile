@@ -73,11 +73,11 @@ RUN perl -pi -e"s|(cd libs.+)CFLAGS=\\\'|\$1CFLAGS=\\\'-fPIC |" Makefile.PL
 # Install htslib binaries (for 'bgzip' and 'tabix')
 # htslib requires the packages 'zlib1g-dev', 'libbz2-dev' and 'liblzma-dev'
 WORKDIR $HTSLIB_DIR
-RUN make install && rm -f Makefile *.c
+RUN make install
 
 # Install samtools
 WORKDIR $SAMTOOLS_DIR
-RUN make install && rm -f Makefile *.c
+RUN make install
 
 # Compile Variation LD C scripts
 WORKDIR $OPT_SRC/var_c_code
