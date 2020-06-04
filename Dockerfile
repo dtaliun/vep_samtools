@@ -22,6 +22,7 @@ RUN apt-get update && apt-get -y install \
 ENV OPT /opt/vep
 ENV OPT_SRC $OPT/src
 ENV HTSLIB_DIR $OPT_SRC/htslib
+ENV SAMTOOLS_DIR $OPT_SRC/samtools
 ENV BRANCH release/100
 
 # Working directory
@@ -49,6 +50,8 @@ RUN if [ "$BRANCH" = "master" ]; \
     unzip -q ensembl-xs.zip && mv ensembl-xs-2.3.2 ensembl-xs && rm -rf ensembl-xs.zip && \
     # Clone/Download other repositories: bioperl-live is needed so the cpanm dependencies installation from the ensembl-vep/cpanfile file takes less disk space
     ensembl-vep/travisci/get_dependencies.sh && \
+    # Clone samtools
+    git clone --branch 1.9 --depth 1 https://github.com/samtools/samtools.git && \
     # Only keep the bioperl-live "Bio" library
     mv bioperl-live bioperl-live_bak && mkdir bioperl-live && mv bioperl-live_bak/Bio bioperl-live/ && rm -rf bioperl-live_bak && \
     ## A lot of cleanup on the imported libraries, in order to reduce the docker image ##
@@ -70,6 +73,10 @@ RUN perl -pi -e"s|(cd libs.+)CFLAGS=\\\'|\$1CFLAGS=\\\'-fPIC |" Makefile.PL
 # Install htslib binaries (for 'bgzip' and 'tabix')
 # htslib requires the packages 'zlib1g-dev', 'libbz2-dev' and 'liblzma-dev'
 WORKDIR $HTSLIB_DIR
+RUN make install && rm -f Makefile *.c
+
+# Install samtools
+WORKDIR $SAMTOOLS_DIR
 RUN make install && rm -f Makefile *.c
 
 # Compile Variation LD C scripts
